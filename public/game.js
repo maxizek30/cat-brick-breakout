@@ -1,48 +1,52 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 const ball = {
-  x: 320,
-  y: 240,
-  radius: 10,
-  dx: 3,
-  dy: 3,
+  x: 350,
+  y: 400,
+  radius: 6,
+  dx: 4,
+  dy: 4,
 };
 const paddle = {
-  x: 270,
-  y: 450,
-  width: 100,
-  height: 12,
-  speed: 5,
+  x: 315,
+  y: 660,
+  width: 70,
+  height: 10,
+  speed: 6,
 };
 const BRICK = {
-  width: 58,
-  height: 20,
-  padding: 6,
+  size: 12,
+  padding: 2,
   offsetTop: 50,
-  offsetLeft: 25,
+  offsetLeft: 40,
 };
 let bricks = [];
+let liveBrickCount = 0;
 
 let gameState = "ready"; // "ready" | "playing" | "gameover" | "won"
 let lives = 3;
 
 function buildBricksFromLayout(layout) {
   bricks = [];
+  liveBrickCount = 0;
   for (let r = 0; r < layout.length; r++) {
     bricks[r] = [];
     for (let c = 0; c < layout[r].length; c++) {
-      const x = c * (BRICK.width + BRICK.padding) + BRICK.offsetLeft;
-      const y = r * (BRICK.height + BRICK.padding) + BRICK.offsetTop;
+      const x = c * (BRICK.size + BRICK.padding) + BRICK.offsetLeft;
+      const y = r * (BRICK.size + BRICK.padding) + BRICK.offsetTop;
+      const type = layout[r][c];
       bricks[r][c] = {
         x,
         y,
-        alive: layout[r][c] === 1,
+        type,
+        alive: type !== 0,
       };
+      if (type === 1) liveBrickCount++;
     }
   }
 }
 
-let currentLevelId = 3;
+let currentLevelId = 5;
 
 async function loadLevel(levelId) {
   const response = await fetch("/api/levels.php");
@@ -63,8 +67,8 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "ArrowLeft") keys.left = true;
   if (e.key === "ArrowRight") keys.right = true;
   if (e.key === " " && gameState === "ready") {
-    ball.dx = 3;
-    ball.dy = -3;
+    ball.dx = 4;
+    ball.dy = -4;
     gameState = "playing";
   }
   if (
@@ -157,21 +161,21 @@ function update() {
 
       if (
         ball.x + ball.radius > b.x &&
-        ball.x - ball.radius < b.x + BRICK.width &&
+        ball.x - ball.radius < b.x + BRICK.size &&
         ball.y + ball.radius > b.y &&
-        ball.y - ball.radius < b.y + BRICK.height
+        ball.y - ball.radius < b.y + BRICK.size
       ) {
         // Find the brick's center
-        const brickCenterX = b.x + BRICK.width / 2;
-        const brickCenterY = b.y + BRICK.height / 2;
+        const brickCenterX = b.x + BRICK.size / 2;
+        const brickCenterY = b.y + BRICK.size / 2;
 
         // Distance from ball center to brick center
         const dx = ball.x - brickCenterX;
         const dy = ball.y - brickCenterY;
 
         // Overlap on each axis
-        const overlapX = BRICK.width / 2 + ball.radius - Math.abs(dx);
-        const overlapY = BRICK.height / 2 + ball.radius - Math.abs(dy);
+        const overlapX = BRICK.size / 2 + ball.radius - Math.abs(dx);
+        const overlapY = BRICK.size / 2 + ball.radius - Math.abs(dy);
 
         // The smaller overlap is the axis we just crossed → reflect on that one
         if (overlapX < overlapY) {
@@ -180,12 +184,15 @@ function update() {
           ball.dy = -ball.dy;
         }
 
-        b.alive = false;
-        break; // stop checking bricks this frame to avoid double-bounces
+        if (b.type === 1) {
+          b.alive = false;
+          liveBrickCount--;
+        }
+        break;
       }
     }
   }
-  if (bricks.flat().every((b) => !b.alive)) {
+  if (liveBrickCount === 0) {
     gameState = "won";
   }
 }
@@ -198,7 +205,12 @@ function draw() {
     for (let c = 0; c < bricks[r].length; c++) {
       const b = bricks[r][c];
       if (!b.alive) continue;
-      ctx.fillRect(b.x, b.y, BRICK.width, BRICK.height);
+      if (b.type === 2) {
+        ctx.fillStyle = "#666";
+      } else {
+        ctx.fillStyle = "#ff2e63";
+      }
+      ctx.fillRect(b.x, b.y, BRICK.size, BRICK.size);
     }
   }
 

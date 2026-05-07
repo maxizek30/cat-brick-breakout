@@ -40,40 +40,66 @@ $db->exec('
     )
 ');
 
-// Define the seed data
+
+function buildPyramid($height, $width) {
+    $layout = [];
+    for ($r = 0; $r < $height; $r++) {
+        $row = array_fill(0, $width, 0);
+        $halfWidth = $r + 1;
+        $start = (int)(($width - (2 * $halfWidth - 1)) / 2);
+        for ($c = $start; $c < $start + (2 * $halfWidth - 1); $c++) {
+            $row[$c] = 1;
+        }
+        $layout[] = $row;
+    }
+    return $layout;
+}
+function buildBunker() {
+    $layout = [];
+    for ($r = 0; $r < 6; $r++) {
+        $layout[] = array_fill(0, 40, 1);
+    }
+    for ($r = 0; $r < 2; $r++) {
+        $row = array_fill(0, 40, 2);
+        $row[8] = 0;
+        $row[19] = 0;
+        $row[30] = 0;
+        $layout[] = $row;
+    }
+    for ($r = 0; $r < 4; $r++) {
+        $layout[] = array_fill(0, 40, 1);
+    }
+    return $layout;
+}
+
 $levels = [
     [
         'name' => 'Warmup',
         'difficulty' => 1,
-        'layout' => [
-            [1,1,1,1,1,1,1,1,1],
-            [1,1,1,1,1,1,1,1,1],
-            [1,1,1,1,1,1,1,1,1],
-        ],
+        'layout' => array_fill(0, 8, array_fill(0, 30, 1)),
     ],
     [
         'name' => 'Standard',
         'difficulty' => 2,
-        'layout' => [
-            [1,1,1,1,1,1,1,1,1],
-            [1,1,1,1,1,1,1,1,1],
-            [1,1,1,1,1,1,1,1,1],
-            [1,1,1,1,1,1,1,1,1],
-            [1,1,1,1,1,1,1,1,1],
-        ],
+        'layout' => array_fill(0, 20, array_fill(0, 40, 1)),
     ],
     [
         'name' => 'Pyramid',
         'difficulty' => 3,
-        'layout' => [
-            [0,0,0,0,1,0,0,0,0],
-            [0,0,0,1,1,1,0,0,0],
-            [0,0,1,1,1,1,1,0,0],
-            [0,1,1,1,1,1,1,1,0],
-            [1,1,1,1,1,1,1,1,1],
-        ],
+        'layout' => buildPyramid(20, 40),
     ],
+       [
+        'name' => 'The Wall',
+        'difficulty' => 4,
+        'layout' => array_fill(0, 40, array_fill(0, 44, 1)),
+    ],
+    [
+    'name' => 'Bunker',
+    'difficulty' => 5,
+    'layout' => buildBunker(),
+],
 ];
+
 
 // Insert each level using a prepared statement
 $stmt = $db->prepare('INSERT INTO levels (name, layout, difficulty) VALUES (:name, :layout, :difficulty)');
