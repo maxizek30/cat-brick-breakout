@@ -1,0 +1,10 @@
+# Generated database — regenerated via setup.php
+data/leaderboard.db
+data/*.db-journal
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
