@@ -72,32 +72,65 @@ function buildBunker() {
     return $layout;
 }
 
+function buildTunnel() {
+    $width = 30;
+    $height = 22;
+    $layout = [];
+
+    for ($r = 0; $r < 3; $r++) {
+        $layout[] = array_fill(0, $width, 1);
+    }
+
+    $tunnelWidth = 6;          // empty cells in the middle
+    $wallStart = (int)(($width - $tunnelWidth) / 2);
+    $wallEnd = $wallStart + $tunnelWidth;
+
+    for ($r = 0; $r < $height - 3; $r++) {
+        $row = [];
+        for ($c = 0; $c < $width; $c++) {
+            if ($c >= $wallStart && $c < $wallEnd) {
+                $row[] = 0;       // open tunnel
+            } else {
+                $row[] = 2;       // unbreakable wall
+            }
+        }
+        $layout[] = $row;
+    }
+
+    return $layout;
+}
+
 $levels = [
     [
         'name' => 'Warmup',
         'difficulty' => 1,
-        'layout' => array_fill(0, 8, array_fill(0, 30, 1)),
+        'layout' => array_fill(0, 5, array_fill(0, 20, 1)),
     ],
     [
         'name' => 'Standard',
         'difficulty' => 2,
-        'layout' => array_fill(0, 20, array_fill(0, 40, 1)),
+        'layout' => array_fill(0, 12, array_fill(0, 28, 1)),
     ],
     [
         'name' => 'Pyramid',
         'difficulty' => 3,
-        'layout' => buildPyramid(20, 40),
+        'layout' => buildPyramid(12, 25),
     ],
-       [
+    [
         'name' => 'The Wall',
         'difficulty' => 4,
         'layout' => array_fill(0, 40, array_fill(0, 44, 1)),
     ],
     [
-    'name' => 'Bunker',
-    'difficulty' => 5,
-    'layout' => buildBunker(),
-],
+        'name' => 'Bunker',
+        'difficulty' => 5,
+        'layout' => buildBunker(),
+    ],
+    [
+        'name' => 'Tunnel',
+        'difficulty' => 0,
+        'layout' => buildTunnel(),
+    ],
 ];
 
 
