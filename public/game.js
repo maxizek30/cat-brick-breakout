@@ -68,6 +68,8 @@ function updateMood() {
 let gameState = "ready"; // "ready" | "playing" | "gameover" | "won"
 let lives = 3;
 
+let levelStartTime = null;
+
 function buildBricksFromLayout(layout) {
   bricks = [];
   liveBrickCount = 0;
@@ -91,7 +93,7 @@ function buildBricksFromLayout(layout) {
   }
 }
 
-let currentLevelId = 6;
+let currentLevelId = 7;
 
 async function loadLevel(levelId) {
   const response = await fetch("/api/levels.php");
@@ -105,6 +107,21 @@ async function loadLevel(levelId) {
   }
   return level;
 }
+
+async function fetchLeaderboard(levelId) {
+  try {
+    const response = await fetch(`/api/leaderboard.php?level_id=${levelId}`);
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    return await response.json();
+  } catch (err) {
+    console.error("Failed to fetch leaderboard:", err);
+    return [];
+  }
+}
+
+let currentLeaderboard = [];
 
 const keys = { left: false, right: false };
 
@@ -120,6 +137,9 @@ document.addEventListener("keydown", (e) => {
       b.dx = 0;
       b.dy = -3;
     }
+    if (levelStartTime === null) {
+      levelStartTime = performance.now();
+    }
     gameState = "playing";
   }
   if (
@@ -134,6 +154,8 @@ async function restart() {
     const level = await loadLevel(currentLevelId);
     buildBricksFromLayout(level.layout);
     lives = 3;
+    levelStartTime = null;
+    currentLeaderboard = [];
     resetBalls();
     gameState = "ready";
   } catch (err) {
@@ -178,6 +200,34 @@ function applyAddThree() {
 function applyPowerup(type) {
   if (type === "multiply") applyMultiply();
   else if (type === "add_three") applyAddThree();
+}
+
+async function submitScore(levelId, timeMs) {
+  const playerName = prompt(
+    `You won in ${(timeMs / 1000).toFixed(2)}s! Enter your name (1-20 chars):`,
+    "Player",
+  );
+  if (!playerName || playerName.trim() === "") return;
+
+  try {
+    const response = await fetch("/api/submit_score.php", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        player_name: playerName.trim().slice(0, 20),
+        level_id: levelId,
+        time_ms: timeMs,
+      }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+      console.error("Score submission failed:", data.error);
+      return;
+    }
+    console.log("Score submitted, id:", data.id);
+  } catch (err) {
+    console.error("Network error submitting score:", err);
+  }
 }
 
 function update() {
@@ -298,8 +348,14 @@ function update() {
   }
 
   // Win check
-  if (liveBrickCount === 0) {
+  if (liveBrickCount === 0 && gameState !== "won") {
     gameState = "won";
+    const elapsed = Math.round(performance.now() - levelStartTime);
+    submitScore(currentLevelId, elapsed).then(() => {
+      fetchLeaderboard(currentLevelId).then((scores) => {
+        currentLeaderboard = scores;
+      });
+    });
   }
 }
 function draw() {
@@ -369,14 +425,30 @@ function draw() {
   } else if (gameState === "won") {
     ctx.font = "32px monospace";
     ctx.fillStyle = "#08d9d6";
-    ctx.fillText("YOU WIN!", canvas.width / 2, canvas.height / 2);
-    ctx.font = "16px monospace";
+    ctx.fillText("YOU WIN!", canvas.width / 2, 100);
+
+    ctx.font = "14px monospace";
     ctx.fillStyle = "#eaeaea";
-    ctx.fillText(
-      "Press R to play again",
-      canvas.width / 2,
-      canvas.height / 2 + 30,
-    );
+    ctx.fillText("Press R to play again", canvas.width / 2, 130);
+
+    // Leaderboard
+    ctx.font = "16px monospace";
+    ctx.fillStyle = "#08d9d6";
+    ctx.fillText("Top 10 Fastest Clears", canvas.width / 2, 180);
+
+    ctx.font = "13px monospace";
+    ctx.fillStyle = "#eaeaea";
+    if (currentLeaderboard.length === 0) {
+      ctx.fillText("Loading...", canvas.width / 2, 210);
+    } else {
+      currentLeaderboard.forEach((entry, i) => {
+        const rank = `${i + 1}.`.padEnd(4);
+        const name = entry.player_name.padEnd(20);
+        const time = `${(entry.time_ms / 1000).toFixed(2)}s`;
+        const line = `${rank}${name}${time}`;
+        ctx.fillText(line, canvas.width / 2, 210 + i * 20);
+      });
+    }
   }
 }
 function loop() {
@@ -389,6 +461,7 @@ async function startGame() {
     const level = await loadLevel(currentLevelId);
     buildBricksFromLayout(level.layout);
     resetBalls();
+    levelStartTime = null;
     gameState = "ready";
     loop();
   } catch (err) {

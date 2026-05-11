@@ -131,10 +131,14 @@ $levels = [
         'difficulty' => 0,
         'layout' => buildTunnel(),
     ],
+    [
+    'name' => 'Tiny',
+    'difficulty' => 0,
+    'layout' => array_fill(0, 1, array_fill(0, 2, 1)),
+],
 ];
 
 
-// Insert each level using a prepared statement
 $stmt = $db->prepare('INSERT INTO levels (name, layout, difficulty) VALUES (:name, :layout, :difficulty)');
 
 foreach ($levels as $level) {
