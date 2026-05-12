@@ -117,9 +117,9 @@ $levels = [
         'layout' => buildPyramid(12, 25),
     ],
     [
-        'name' => 'The Wall',
-        'difficulty' => 4,
-        'layout' => array_fill(0, 40, array_fill(0, 44, 1)),
+    'name' => 'The Wall',
+    'difficulty' => 4,
+    'layout' => array_fill(0, 28, array_fill(0, 44, 1)),
     ],
     [
         'name' => 'Bunker',
