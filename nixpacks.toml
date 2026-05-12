@@ -2,4 +2,4 @@
 nixPkgs = ["php82", "php82Extensions.sqlite3"]
 
 [start]
-cmd = "php -S 0.0.0.0:$PORT -t public/"
+cmd = "test -f /data/leaderboard.db || php data/setup.php; php -S 0.0.0.0:$PORT -t public/"
