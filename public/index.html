@@ -3,31 +3,39 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
+    <title>Game</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <canvas
-      id="game"
-      width="700"
-      height="550"
-      style="background: #000; border: 2px solid #08d9d6"
-    ></canvas>
-    <div id="cat-container">
-      <video id="cat-happy" loop muted playsinline preload="auto">
-        <source src="assets/chipichapa.webm" type="video/webm" />
-      </video>
-      <video
-        id="cat-sad"
-        loop
-        muted
-        playsinline
-        preload="auto"
-        style="display: none"
-      >
-        <source src="assets/sadcat.mp4" type="video/mp4" />
-      </video>
+    <div id="left-column"></div>
+    <div id="game-column">
+      <canvas
+        id="game"
+        width="700"
+        height="550"
+        style="background: #000; border: 2px solid #08d9d6"
+      ></canvas>
+      <div id="cat-container">
+        <video id="cat-happy" loop muted playsinline preload="auto">
+          <source src="assets/chipichapa.webm" type="video/webm" />
+        </video>
+        <video
+          id="cat-sad"
+          loop
+          muted
+          playsinline
+          preload="auto"
+          style="display: none"
+        >
+          <source src="assets/sadcat.mp4" type="video/mp4" />
+        </video>
+      </div>
     </div>
+    <div id="right-column">
+      <div id="level-picker"></div>
+      <div id="leaderboard-sidebar"></div>
+    </div>
+
     <script src="game.js"></script>
   </body>
 </html>

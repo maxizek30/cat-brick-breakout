@@ -28,6 +28,8 @@ const POWERUP = {
   spawnChance: 0.15,
 };
 
+let levelEndTime = null;
+
 const POWERUP_TYPES = ["multiply", "add_three"];
 
 let powerups = [];
@@ -93,19 +95,45 @@ function buildBricksFromLayout(layout) {
   }
 }
 
-let currentLevelId = 7;
+let currentLevelId = null;
 
-async function loadLevel(levelId) {
+let allLevels = [];
+
+async function loadLevels() {
   const response = await fetch("/api/levels.php");
   if (!response.ok) {
     throw new Error(`Failed to load levels: HTTP ${response.status}`);
   }
-  const levels = await response.json();
-  const level = levels.find((l) => l.id === levelId) || levels[0];
-  if (!level) {
+  allLevels = await response.json();
+  if (allLevels.length === 0) {
     throw new Error("No levels found in database");
   }
-  return level;
+}
+
+function getLevelById(id) {
+  return allLevels.find((l) => l.id === id) || allLevels[0];
+}
+
+async function startLevel(levelId) {
+  currentLevelId = levelId;
+  const level = getLevelById(levelId);
+  buildBricksFromLayout(level.layout);
+  lives = 3;
+  levelStartTime = null;
+  levelEndTime = null;
+  currentLeaderboard = [];
+  resetBalls();
+  gameState = "ready";
+  highlightActiveLevel();
+  renderLeaderboardSidebar();
+
+  // Fetch fresh leaderboard for this level
+  fetchLeaderboard(levelId).then((scores) => {
+    if (currentLevelId === levelId) {
+      currentLeaderboard = scores;
+      renderLeaderboardSidebar();
+    }
+  });
 }
 
 async function fetchLeaderboard(levelId) {
@@ -149,18 +177,8 @@ document.addEventListener("keydown", (e) => {
     restart();
   }
 });
-async function restart() {
-  try {
-    const level = await loadLevel(currentLevelId);
-    buildBricksFromLayout(level.layout);
-    lives = 3;
-    levelStartTime = null;
-    currentLeaderboard = [];
-    resetBalls();
-    gameState = "ready";
-  } catch (err) {
-    console.error("Failed to restart:", err);
-  }
+function restart() {
+  startLevel(currentLevelId);
 }
 document.addEventListener("keyup", (e) => {
   if (e.key === "ArrowLeft") keys.left = false;
@@ -230,6 +248,60 @@ async function submitScore(levelId, timeMs) {
   }
 }
 
+function renderLevelPicker() {
+  const picker = document.getElementById("level-picker");
+  picker.innerHTML = "<h3>LEVELS</h3>";
+
+  for (const level of allLevels) {
+    const btn = document.createElement("button");
+    btn.className = "level-button";
+    btn.textContent = `${level.name}`;
+    btn.dataset.levelId = level.id;
+    btn.addEventListener("click", () => {
+      startLevel(level.id);
+    });
+    picker.appendChild(btn);
+  }
+
+  highlightActiveLevel();
+}
+
+function highlightActiveLevel() {
+  const buttons = document.querySelectorAll(".level-button");
+  buttons.forEach((btn) => {
+    if (parseInt(btn.dataset.levelId) === currentLevelId) {
+      btn.classList.add("active");
+    } else {
+      btn.classList.remove("active");
+    }
+  });
+}
+
+function renderLeaderboardSidebar() {
+  const sidebar = document.getElementById("leaderboard-sidebar");
+  const levelName = getLevelById(currentLevelId)?.name || "—";
+  sidebar.innerHTML = `<h3>TOP 10 — ${levelName.toUpperCase()}</h3>`;
+
+  if (!currentLeaderboard || currentLeaderboard.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "No scores yet";
+    sidebar.appendChild(empty);
+    return;
+  }
+
+  currentLeaderboard.forEach((entry, i) => {
+    const row = document.createElement("div");
+    row.className = "leaderboard-entry";
+    row.innerHTML = `
+      <span class="rank">${i + 1}.</span>
+      <span class="name">${entry.player_name}</span>
+      <span class="time">${(entry.time_ms / 1000).toFixed(2)}s</span>
+    `;
+    sidebar.appendChild(row);
+  });
+}
+
 function update() {
   if (gameState === "gameover" || gameState === "won") return;
   updateMood();
@@ -296,8 +368,12 @@ function update() {
 
           if (overlapX < overlapY) {
             b.dx = -b.dx;
+            if (dx > 0) b.x += overlapX;
+            else b.x -= overlapX;
           } else {
             b.dy = -b.dy;
+            if (dy > 0) b.y += overlapY;
+            else b.y -= overlapY;
           }
 
           if (brick.type === 1) {
@@ -341,6 +417,7 @@ function update() {
     lives -= 1;
     if (lives <= 0) {
       gameState = "gameover";
+      levelEndTime = performance.now(); // ← add this
     } else {
       resetBalls();
       gameState = "ready";
@@ -350,10 +427,12 @@ function update() {
   // Win check
   if (liveBrickCount === 0 && gameState !== "won") {
     gameState = "won";
+    levelEndTime = performance.now();
     const elapsed = Math.round(performance.now() - levelStartTime);
     submitScore(currentLevelId, elapsed).then(() => {
       fetchLeaderboard(currentLevelId).then((scores) => {
         currentLeaderboard = scores;
+        renderLeaderboardSidebar();
       });
     });
   }
@@ -406,6 +485,17 @@ function draw() {
   ctx.textAlign = "left";
   ctx.fillText(`Lives: ${lives}`, 10, 24);
 
+  // Timer (top right)
+  const referenceTime =
+    levelEndTime !== null ? levelEndTime : performance.now();
+  const displayTime =
+    levelStartTime === null ? 0 : (referenceTime - levelStartTime) / 1000;
+
+  ctx.fillStyle = "#08d9d6";
+  ctx.font = "16px monospace";
+  ctx.textAlign = "right";
+  ctx.fillText(`${displayTime.toFixed(2)}s`, canvas.width - 10, 24);
+
   // state overlays
   ctx.textAlign = "center";
   if (gameState === "ready") {
@@ -430,25 +520,6 @@ function draw() {
     ctx.font = "14px monospace";
     ctx.fillStyle = "#eaeaea";
     ctx.fillText("Press R to play again", canvas.width / 2, 130);
-
-    // Leaderboard
-    ctx.font = "16px monospace";
-    ctx.fillStyle = "#08d9d6";
-    ctx.fillText("Top 10 Fastest Clears", canvas.width / 2, 180);
-
-    ctx.font = "13px monospace";
-    ctx.fillStyle = "#eaeaea";
-    if (currentLeaderboard.length === 0) {
-      ctx.fillText("Loading...", canvas.width / 2, 210);
-    } else {
-      currentLeaderboard.forEach((entry, i) => {
-        const rank = `${i + 1}.`.padEnd(4);
-        const name = entry.player_name.padEnd(20);
-        const time = `${(entry.time_ms / 1000).toFixed(2)}s`;
-        const line = `${rank}${name}${time}`;
-        ctx.fillText(line, canvas.width / 2, 210 + i * 20);
-      });
-    }
   }
 }
 function loop() {
@@ -458,11 +529,9 @@ function loop() {
 }
 async function startGame() {
   try {
-    const level = await loadLevel(currentLevelId);
-    buildBricksFromLayout(level.layout);
-    resetBalls();
-    levelStartTime = null;
-    gameState = "ready";
+    await loadLevels();
+    renderLevelPicker();
+    startLevel(allLevels[0].id);
     loop();
   } catch (err) {
     console.error("Failed to start game:", err);
@@ -470,7 +539,7 @@ async function startGame() {
     ctx.font = "20px monospace";
     ctx.textAlign = "center";
     ctx.fillText(
-      "Failed to load level. Is the server running?",
+      "Failed to load levels. Is the server running?",
       canvas.width / 2,
       canvas.height / 2,
     );
