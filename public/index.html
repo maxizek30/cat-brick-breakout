@@ -7,13 +7,13 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div id="left-column"></div>
+    <div id="left-column"><div id="level-picker"></div></div>
     <div id="game-column">
       <canvas
         id="game"
         width="700"
         height="550"
-        style="background: #000; border: 2px solid #08d9d6"
+        style="background: #000; border: 2px solid white"
       ></canvas>
       <div id="cat-container">
         <video id="cat-happy" loop muted playsinline preload="auto">
@@ -32,8 +32,22 @@
       </div>
     </div>
     <div id="right-column">
-      <div id="level-picker"></div>
       <div id="leaderboard-sidebar"></div>
+      <div id="controls-box">
+        <h3>CONTROLS</h3>
+        <div class="control-row">
+          <span class="control-key">← →</span>
+          <span class="control-action">Move paddle</span>
+        </div>
+        <div class="control-row">
+          <span class="control-key">SPACE</span>
+          <span class="control-action">Launch ball</span>
+        </div>
+        <div class="control-row">
+          <span class="control-key">R</span>
+          <span class="control-action">Restart level</span>
+        </div>
+      </div>
     </div>
 
     <script src="game.js"></script>

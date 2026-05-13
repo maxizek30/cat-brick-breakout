@@ -94,7 +94,7 @@ function applyMultiply() {
 function applyAddThree() {
   const cx = paddle.x + paddle.width / 2;
   const cy = paddle.y - 10;
-  const speed = 5;
+  const speed = 3;
   for (let i = 0; i < 3; i++) {
     const angle = -Math.PI / 2 + ((i - 1) * Math.PI) / 6;
     balls.push(
@@ -206,7 +206,6 @@ async function submitScore(levelId, timeMs) {
       console.error("Score submission failed:", data.error);
       return;
     }
-    console.log("Score submitted, id:", data.id);
   } catch (err) {
     console.error("Network error submitting score:", err);
   }
@@ -306,14 +305,14 @@ document.addEventListener("keydown", (e) => {
     happyVideo.muted = false;
     sadVideo.muted = false;
   }
+  if (e.key === "ArrowLeft" || e.key === "ArrowRight" || e.key === " ") {
+    e.preventDefault();
+  }
   if (e.key === "ArrowLeft") keys.left = true;
   if (e.key === "ArrowRight") keys.right = true;
   if (e.key === " " && gameState === "ready") {
-    console.log(
-      `Launch from x=${balls[0]?.x}, paddle.x=${paddle.x}, repeat=${e.repeat}`,
-    );
     for (const b of balls) {
-      b.dx = 1;
+      b.dx = (Math.random() - 0.5) * 0.6;
       b.dy = -3;
     }
     if (levelStartTime === null) {
@@ -439,9 +438,6 @@ function update() {
   powerups = powerups.filter((p) => p.alive && p.y < canvas.height);
 
   if (balls.length === 0) {
-    console.log(
-      `Lost a ball. Lives now: ${lives - 1}, gameState going to ready`,
-    );
     lives -= 1;
     if (lives <= 0) {
       gameState = "gameover";

@@ -23,7 +23,9 @@ body {
 
 #game-column {
   display: flex;
+  gap: 20px;
   flex-direction: column;
+  align-items: center;
 }
 
 #game {
@@ -36,12 +38,12 @@ body {
   gap: 8px;
   padding: 8px;
   background: #000;
-  border: 2px solid #08d9d6;
+  border: 2px solid white;
 }
 
 #level-picker h3 {
   margin: 0 0 8px 0;
-  color: #08d9d6;
+  color: white;
   font-size: 14px;
   text-align: center;
 }
@@ -62,21 +64,19 @@ body {
 
 .level-button:hover {
   background: #333;
-  border-color: #08d9d6;
+  border-color: white;
 }
 
 .level-button.active {
-  background: #08d9d6;
+  background: white;
   color: #000;
-  border-color: #08d9d6;
+  border-color: white;
 }
 
 #cat-container {
-  width: 700px;
-  height: 200px;
+  width: 400px;
+  height: 300px;
   background: #000;
-  border: 2px solid #08d9d6;
-  border-top: none;
   overflow: hidden;
   position: relative;
 }
@@ -90,12 +90,13 @@ body {
 #leaderboard-sidebar {
   padding: 8px;
   background: #000;
-  border: 2px solid #08d9d6;
+  height: 380px;
+  border: 2px solid white;
 }
 
 #leaderboard-sidebar h3 {
   margin: 0 0 8px 0;
-  color: #08d9d6;
+  color: white;
   font-size: 14px;
   text-align: center;
 }
@@ -122,7 +123,7 @@ body {
 }
 
 #leaderboard-sidebar .leaderboard-entry .time {
-  color: #08d9d6;
+  color: white;
 }
 
 #leaderboard-sidebar .empty {
@@ -130,4 +131,43 @@ body {
   text-align: center;
   font-size: 12px;
   padding: 8px;
+}
+#controls-box {
+  padding: 8px;
+  background: #000;
+  height: 125px;
+  border: 2px solid white;
+}
+
+#controls-box h3 {
+  margin: 0 0 8px 0;
+  color: white;
+  font-size: 14px;
+  text-align: center;
+}
+
+.control-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #eaeaea;
+  font-size: 12px;
+  padding: 4px 4px;
+}
+
+.control-key {
+  background: #222;
+  border: 1px solid #444;
+  padding: 2px 8px;
+  border-radius: 3px;
+  color: white;
+  font-weight: bold;
+  min-width: 40px;
+  text-align: center;
+}
+
+.control-action {
+  flex: 1;
+  padding-left: 12px;
+  text-align: right;
 }
