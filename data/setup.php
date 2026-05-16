@@ -38,20 +38,16 @@ $db->exec('
     )
 ');
 
-// ─── Level builders ───────────────────────────────────────────────────
 
-// One breakable brick in the middle of a 44-wide canvas. For showcasing.
 function buildShowcase() {
     $width = 44;
     $emptyRowsAbove = 25;  // push the brick down
     $layout = [];
 
-    // Empty space above
     for ($r = 0; $r < $emptyRowsAbove; $r++) {
         $layout[] = array_fill(0, $width, 0);
     }
 
-    // The single brick row, centered
     $row = array_fill(0, $width, 0);
     $row[(int)($width / 2)] = 1;
     $layout[] = $row;
@@ -59,7 +55,6 @@ function buildShowcase() {
     return $layout;
 }
 
-// Centered pyramid filling the full canvas width.
 function buildPyramid($height, $width) {
     $layout = [];
     for ($r = 0; $r < $height; $r++) {
@@ -75,13 +70,11 @@ function buildPyramid($height, $width) {
     return $layout;
 }
 
-// Solid wall of breakables filling the canvas.
 function buildWall($height, $width) {
     return array_fill(0, $height, array_fill(0, $width, 1));
 }
 
-// Vertical pillars of breakables separated by unbreakable gutters.
-// 4 columns of breakables, channels of unbreakables between them.
+
 function buildPillars() {
     $width = 44;
     $height = 22;
@@ -103,8 +96,6 @@ function buildPillars() {
     return $layout;
 }
 
-// Three horizontal bands of breakables, flanked by unbreakable side walls
-// that funnel the ball back into play.
 function buildBands() {
     $width = 44;
     $bands = 3;
@@ -122,14 +113,11 @@ function buildBands() {
             }
         }
     }
-
-    // Empty row of breathing space, then a single unbreakable floor
     $layout[] = array_fill(0, $width, 0);
     $layout[] = array_fill(0, $width, 2);
     return $layout;
 }
 
-// 2 × 3 grid of rectangular brick blocks separated by gutters.
 function buildGrid() {
     $width = 44;
     $cols = 2;
@@ -158,7 +146,6 @@ function buildGrid() {
         }
     }
 
-    // Empty row of breathing space, then a single unbreakable floor
     $layout[] = array_fill(0, $width, 0);
     $layout[] = array_fill(0, $width, 2);
     return $layout;
@@ -167,13 +154,11 @@ function buildGrid() {
 function buildMaze() {
     $width = 44;
     $height = 22;
-    // Start with everything breakable
     $layout = [];
     for ($r = 0; $r < $height; $r++) {
         $layout[] = array_fill(0, $width, 1);
     }
 
-    // Carve obstacle 1: upper-middle rectangle of unbreakables
     $r1Start = 4; $r1End = 9;
     $c1Start = 12; $c1End = 26;
     for ($r = $r1Start; $r <= $r1End; $r++) {
@@ -182,7 +167,6 @@ function buildMaze() {
         }
     }
 
-    // Carve obstacle 2: lower-right rectangle of unbreakables
     $r2Start = 14; $r2End = 19;
     $c2Start = 26; $c2End = 40;
     for ($r = $r2Start; $r <= $r2End; $r++) {
@@ -194,7 +178,6 @@ function buildMaze() {
     return $layout;
 }
 
-// ─── Level definitions ────────────────────────────────────────────────
 
 $levels = [
     [
