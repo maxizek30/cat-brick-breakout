@@ -548,8 +548,24 @@ function draw() {
 // MAIN LOOP & STARTUP
 // =============================================================================
 
-function loop() {
-  update();
+// Physics runs at a fixed 120 steps/sec regardless of display refresh rate,
+// so speeds tuned in px-per-step behave identically on every machine.
+const STEP_MS = 1000 / 120;
+const MAX_FRAME_MS = 250; // don't fast-forward after the tab was hidden
+
+let lastFrameTime = null;
+let accumulator = 0;
+
+function loop(now) {
+  if (lastFrameTime === null) lastFrameTime = now;
+  accumulator += Math.min(now - lastFrameTime, MAX_FRAME_MS);
+  lastFrameTime = now;
+
+  while (accumulator >= STEP_MS) {
+    update();
+    accumulator -= STEP_MS;
+  }
+
   draw();
   requestAnimationFrame(loop);
 }
@@ -559,7 +575,7 @@ async function startGame() {
     await loadLevels();
     renderLevelPicker();
     startLevel(allLevels[0].id);
-    loop();
+    requestAnimationFrame(loop);
   } catch (err) {
     console.error("Failed to start game:", err);
     ctx.fillStyle = "#ff2e63";
